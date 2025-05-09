@@ -1,51 +1,55 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class CharacterMovement : MonoBehaviour
 {
-    // Player variables
-    public bool touchingGround;
-    public bool whileJump;
-    float moveSpeed = 5;
-    float jumpHeight = 8;
+    
+    #region Variables
+    [Header("Player Variables")]
+    Rigidbody2D rb;
+    
+    [Header("Movement Variables")]
+    [SerializeField] float moveSpeed = 5;
+    [SerializeField] float jumpHeight = 8;
+    float xAxis;
+
+    [Header("GroundCheck Variables")] 
+    [SerializeField] Transform groundCheck;
+    [SerializeField] Vector2 groundCheckRadius;
+    LayerMask ground;
+    #endregion
+    
+    #region Update + Awake
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        ground = LayerMask.GetMask("Ground");
+    }
 
     void Update()
     {
+        WhileJump();
         Movement();
         
-        if (Input.GetKey(KeyCode.Space) && whileJump)
-            WhileJump();
-        else if (!touchingGround)
+        if (!IsGrounded() && rb.linearVelocityY <= 0)
             Falling();
-    } 
-    
-    void Movement()
-    {
-        var pos = GetComponent<Rigidbody2D>().position;
-        pos.x += Input.GetAxisRaw("Horizontal") * moveSpeed * Time.deltaTime;
-        GetComponent<Rigidbody2D>().position = pos;
     }
-
-    [HideInInspector] public float time = 0;
+    #endregion
     
+    void Movement() => rb.linearVelocityX = moveSpeed * Input.GetAxisRaw("Horizontal");
+
     void WhileJump()
     {
-        time += Time.deltaTime;
-        
-        if (time > 0.75f)
-            whileJump = false;
-        
-        var pos = GetComponent<Rigidbody2D>().position;
-        pos.y += jumpHeight * Time.deltaTime;
-        GetComponent<Rigidbody2D>().position = pos;
+        Debug.Log(rb.linearVelocity);
+        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
+            rb.linearVelocityY = jumpHeight;
+
+        if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocityY > 0)
+            rb.linearVelocityY = 0;
     }
 
-    void Falling()
-    {
-        if (Input.GetKeyUp(KeyCode.Space))
-            whileJump = false;
-        
-        var pos = GetComponent<Rigidbody2D>().position;
-        pos.y -= jumpHeight * Time.deltaTime;
-        GetComponent<Rigidbody2D>().position = pos;
-    }
+    bool IsGrounded() => Physics2D.OverlapBox(groundCheck.position, groundCheckRadius, 0, ground);
+    
+    void Falling() => rb.linearVelocityY = -jumpHeight;
 }
