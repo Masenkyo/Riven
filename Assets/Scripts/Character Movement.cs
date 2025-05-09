@@ -1,26 +1,23 @@
-using System;
-using System.Collections;
 using UnityEngine;
 
 public class CharacterMovement : MonoBehaviour
 {
     // Player variables
+    public bool touchingGround;
+    public bool whileJump;
     float moveSpeed = 5;
-    float jumpHeight = 10;
-    bool touchingGround;
+    float jumpHeight = 8;
 
     void Update()
     {
         Movement();
         
-        if (Input.GetKey(KeyCode.Space))
+        if (Input.GetKey(KeyCode.Space) && whileJump)
             WhileJump();
         else if (!touchingGround)
             Falling();
     } 
     
-    // void FixedUpdate() => GroundCheck();
-
     void Movement()
     {
         var pos = GetComponent<Rigidbody2D>().position;
@@ -28,8 +25,15 @@ public class CharacterMovement : MonoBehaviour
         GetComponent<Rigidbody2D>().position = pos;
     }
 
+    [HideInInspector] public float time = 0;
+    
     void WhileJump()
     {
+        time += Time.deltaTime;
+        
+        if (time > 0.75f)
+            whileJump = false;
+        
         var pos = GetComponent<Rigidbody2D>().position;
         pos.y += jumpHeight * Time.deltaTime;
         GetComponent<Rigidbody2D>().position = pos;
@@ -37,32 +41,11 @@ public class CharacterMovement : MonoBehaviour
 
     void Falling()
     {
+        if (Input.GetKeyUp(KeyCode.Space))
+            whileJump = false;
+        
         var pos = GetComponent<Rigidbody2D>().position;
         pos.y -= jumpHeight * Time.deltaTime;
         GetComponent<Rigidbody2D>().position = pos;
     }
-
-    // void GroundCheck()
-    // {
-    //     RaycastHit2D hit = Physics2D.Raycast(transform.position, -Vector2.up, 100, 10);
-    //
-    //     touchingGround = hit;
-    //
-    //     if (hit)
-    //     {
-    //         Debug.Log(hit);
-    //     }
-    // }
-    
-    void OnCollisionEnter2D(Collision2D other)
-    {
-        if (other.gameObject.layer == 10)
-            touchingGround = true;
-    }
-    void OnCollisionExit2D(Collision2D other)
-    {
-        if (other.gameObject.layer == 10)
-            touchingGround = false;
-    }
-
 }
